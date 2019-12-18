@@ -2,5 +2,5 @@
 from .views import *
 
 urlpatterns = [
-    path("",announce,name="announce"),
+    path("getAnnounce",getAnnounce,name="getAnnounce"),
 ]

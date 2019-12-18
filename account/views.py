@@ -1,6 +1,6 @@
+
 #_*_ coding:utf-8 _*_
-from django.shortcuts import render
-import django
+
 from django.http import JsonResponse,HttpResponse
 from django.shortcuts import get_object_or_404,redirect
 import urllib.request
@@ -8,16 +8,13 @@ import urllib
 import platform
 from django.conf import settings
 import json
-import requests
-from PIL import Image
-import os
-# from .models import *
-from qcloudsms_py import SmsSingleSender
-from qcloudsms_py.httpclient import HTTPError
+
 from order.models import *
-import os
+from order2.models import *
+from order3.models import *
+
 import logging
-from django.views.decorators.csrf import csrf_exempt
+
 from django.core.serializers.json import DjangoJSONEncoder
 
 logger = logging.getLogger(__name__)
@@ -63,55 +60,55 @@ def order_user_Serializer(o,orderFields,userFields):
     return ret_value
 
 
-class sculogin(object):
-    url = "http://zhjw.scu.edu.cn/j_spring_security_check"
-    img_url = "http://zhjw.scu.edu.cn/img/captcha.jpg"
-    is_updated = False
-
-    #验证码地址
-    #ip + 'static/' + 'account/img/login.jpg'
-
-
-
-    def getCapatcha(self):
-        """
-        :return 图片的url:
-        """
-        self.session = requests.Session()
-        print(sculogin.url)
-        ir = self.session.get(sculogin.img_url)
-        # print(ir.text)
-        if ir.status_code == 200:
-            if platform.system()=="Linux":
-                open(settings.STATIC_ROOT+'/account/img/login.jpg', 'wb').write(ir.content)
-            else:
-                open('static/account/img/login.jpg', 'wb').write(ir.content)
-        # test
-        # img = Image.open("static/account/img/login.jpg")
-        # img.show()
-
-
-    def login(self,username,password,captcha:str,cookies)->bool:
-        """
-        :param captcha:
-        :param username:
-        :param password:
-        :return bool:
-        """
-        self.session = requests.session()
-        data = {
-            'j_username':username,
-            'j_password':password,
-            'j_captcha':captcha,
-        }
-        # print(cookies)
-        res = self.session.post(sculogin.url,data=data,cookies=cookies)
-        # print(res.status_code)
-        # print(res.text)
-        if (res.status_code==200):
-            return True
-
-        return False
+# class sculogin(object):
+#     url = "http://zhjw.scu.edu.cn/j_spring_security_check"
+#     img_url = "http://zhjw.scu.edu.cn/img/captcha.jpg"
+#     is_updated = False
+#
+#     #验证码地址
+#     #ip + 'static/' + 'account/img/login.jpg'
+#
+#
+#
+#     def getCapatcha(self):
+#         """
+#         :return 图片的url:
+#         """
+#         self.session = requests.Session()
+#         print(sculogin.url)
+#         ir = self.session.get(sculogin.img_url)
+#         # print(ir.text)
+#         if ir.status_code == 200:
+#             if platform.system()=="Linux":
+#                 open(settings.STATIC_ROOT+'/account/img/login.jpg', 'wb').write(ir.content)
+#             else:
+#                 open('static/account/img/login.jpg', 'wb').write(ir.content)
+#         # test
+#         # img = Image.open("static/account/img/login.jpg")
+#         # img.show()
+#
+#
+#     def login(self,username,password,captcha:str,cookies)->bool:
+#         """
+#         :param captcha:
+#         :param username:
+#         :param password:
+#         :return bool:
+#         """
+#         self.session = requests.session()
+#         data = {
+#             'j_username':username,
+#             'j_password':password,
+#             'j_captcha':captcha,
+#         }
+#         # print(cookies)
+#         res = self.session.post(sculogin.url,data=data,cookies=cookies)
+#         # print(res.status_code)
+#         # print(res.text)
+#         if (res.status_code==200):
+#             return True
+#
+#         return False
 
 
 def login(request):
@@ -192,76 +189,51 @@ def login(request):
 
 
 
-def logout(request):
-    print(dict(request.session))
-    if request.session.exists('openid'):
-        del request.session['openid']
-    if request.session.exists('session_key'):
-        del request.session['session_key']
-    return JsonResponse({"msg":"You are logged out"})
+# def logout(request):
+#     print(dict(request.session))
+#     if request.session.exists('openid'):
+#         del request.session['openid']
+#     if request.session.exists('session_key'):
+#         del request.session['session_key']
+#     return JsonResponse({"msg":"You are logged out"})
+#
+# @csrf_exempt
+# def verifStuId(request):
+#     scuLoginer = sculogin()
+#     print(dict(request.session))
+#     stuId = request.POST.get("stuId","")
+#     passwd = request.POST.get("passwd")
+#     captcha = request.POST.get("captcha")
+#     openid = request.session.get("openid","")
+#     is_updated = request.session.get("is_updated","")
+#     cur_user = get_object_or_404(user,openid=openid)
+#     cookies = request.session.get("cookies")
+#     # print(stuId,passwd,captcha)
+#     # print(cookies)
+#     if not is_updated:
+#         return JsonResponse({"msg":"验证码未更新"},status=404,)
+#
+#     result = scuLoginer.login(username=stuId,password=passwd,captcha=captcha,cookies=cookies)
+#     request.session["is_updated"] = False
+#     if result:
+#         #保存学号和密码
+#         cur_user.studentId = stuId
+#         cur_user.stuIdPwd = passwd
+#         cur_user.save()
+#         return JsonResponse({"msg":"绑定成功"})
+#
+#     else:
+#         return JsonResponse({"msg":"绑定失败"},status=404)
 
-@csrf_exempt
-def verifStuId(request):
-    scuLoginer = sculogin()
-    print(dict(request.session))
-    stuId = request.POST.get("stuId","")
-    passwd = request.POST.get("passwd")
-    captcha = request.POST.get("captcha")
-    openid = request.session.get("openid","")
-    is_updated = request.session.get("is_updated","")
+def myInfo(request):
+    openid = request.session.get("openid")
     cur_user = get_object_or_404(user,openid=openid)
-    cookies = request.session.get("cookies")
-    # print(stuId,passwd,captcha)
-    # print(cookies)
-    if not is_updated:
-        return JsonResponse({"msg":"验证码未更新"},status=404,)
+    userSerializer = serializeUser()
+    # print(isinstance(cur_user,user))
+    value = userSerializer.default(cur_user,*["openid","wx_name","phone","studentId","head_img","rate"])
+    # print(value)
+    return JsonResponse(value,safe=False)
 
-    result = scuLoginer.login(username=stuId,password=passwd,captcha=captcha,cookies=cookies)
-    request.session["is_updated"] = False
-    if result:
-        #保存学号和密码
-        cur_user.studentId = stuId
-        cur_user.stuIdPwd = passwd
-        cur_user.save()
-        return JsonResponse({"msg":"绑定成功"})
-
-    else:
-        return JsonResponse({"msg":"绑定失败"},status=404)
-
-
-def getCaptcha(request):
-    scuLoginer = sculogin()
-    openid = request.session.get("openid","")
-    cur_user = get_object_or_404(user,openid=openid)
-    scuLoginer.getCapatcha()
-    request.session["is_updated"] = True
-    request.session["cookies"] = dict(scuLoginer.session.cookies)
-    return JsonResponse({"msg":"获取验证码成功"})
-
-def verifPhone(request):
-    openid = request.session.get("openid","")
-    cur_user = get_object_or_404(user,openid=openid)
-    phone = request.GET.get("phone")
-    #调用短信接口
-
-    try:
-        sms_appid = settings.sms_appid
-        sms_appkey = settings.sms_appkey
-    except NotImplementedError as e:
-        raise NotImplementedError("sms_appid 或 sms_appkey 未设置")
-
-    ssender = SmsSingleSender(sms_appid,sms_appkey)
-    # try:
-    #     result = ssender.send_with_param(86, phone_numbers[0],
-    #                                      template_id, params, sign=sms_sign, extend="",
-    #                                      ext="")  # 签名参数未提供或者为空时，会使用默认签名发送短信
-    # except HTTPError as e:
-    #     print(e)
-    # except Exception as e:
-    #     print(e)
-
-    #user手机号存储
-    return JsonResponse({"msg":""})
 
 def myorder(request):
     #status 1,2,3,4
@@ -280,7 +252,40 @@ def myorder(request):
     sendOrder = order.objects.filter(order_owner=cur_user)
     receivedOrder = order.objects.filter(free_lancer=cur_user)
 
-    orderFields = ["orderid","value","createTime","expireDateTime","order_owner","free_lancer","money","pos","kuaidi","received_pos","hidden_info"]
+    orderFields = ["orderid","createTime","expireDateTime","order_owner","free_lancer","money","pos","kuaidi","received_pos","hidden_info"]
+    userFields = ["openid","wx_name","phone","studentId","head_img"]
+    if status:
+        sendOrder = sendOrder.filter(order_status=status)
+        receivedOrder = receivedOrder.filter(order_status=status)
+    #默认按照订单创建时间排序,最新的订单
+    sendOrder.order_by("createTime").reverse()
+    receivedOrder.order_by("createTime").reverse()
+
+    sendOrders = [order_user_Serializer(order_obj,orderFields,userFields) for order_obj in sendOrder]
+    receivedOrders = [order_user_Serializer(order_obj,orderFields,userFields) for order_obj in receivedOrder]
+    # sendOrder = sendOrder.values(*orderFields)
+    # receivedOrder = receivedOrder.values(*orderFields)
+
+    return JsonResponse({"sendOrder":sendOrders,"receivedOrder":receivedOrders},safe=False)
+
+def myorder2(request):
+    #status 1,2,3,4
+    #需要登录
+    openid = request.session.get("openid","")
+    cur_user = get_object_or_404(user,openid=openid)
+    status = request.GET.get("status","")
+    kind = request.GET.get("kind","")
+    try:
+        status = int(status)
+    except ValueError as e:
+        logger.critical(e)
+        status = 0
+
+    #第一种,我发的订单
+    sendOrder = order2.objects.filter(order_owner=cur_user, kind=kind)
+    receivedOrder = order2.objects.filter(free_lancer=cur_user, kind=kind)
+
+    orderFields = ["orderid","createTime","expireDateTime","order_owner","free_lancer","money","pos","received_pos","hidden_info"]
     userFields = ["openid","wx_name","phone","studentId","head_img"]
     if status:
         sendOrder = sendOrder.filter(order_status=status)
@@ -306,26 +311,38 @@ def myInfo(request):
     # print(value)
     return JsonResponse(value,safe=False)
 
+def myorder3(request):
+    #status 1,2,3,4
+    #需要登录
+    openid = request.session.get("openid","")
+    cur_user = get_object_or_404(user,openid=openid)
+    status = request.GET.get("status","")
 
-#test函数
-if __name__=="__main__":
+    try:
+        status = int(status)
+    except ValueError as e:
+        logger.critical(e)
+        status = 0
 
+    #第一种,我发的订单
+    sendOrder = order3.objects.filter(order_owner=cur_user)
+    receivedOrder = order3.objects.filter(free_lancer=cur_user)
 
-    scuL = sculogin()
-    print(scuL.is_updated)
-    scuL.getCapatcha()
-    captcha = input("验证码:")
-    print(scuL.login("2017141461248","014170",captcha))
-    username = "2017141461248"
-    password = "014170"
-    captcha = "1234"
-    data = {
-        'j_username': username,
-        'j_password': password,
-        'j_captcha': captcha,
+    orderFields = ["orderid","createTime","expireDateTime","order_owner","free_lancer","money","pos","received_pos","hidden_info"]
+    userFields = ["openid","wx_name","phone","studentId","head_img"]
+    if status:
+        sendOrder = sendOrder.filter(order_status=status)
+        receivedOrder = receivedOrder.filter(order_status=status)
+    #默认按照订单创建时间排序,最新的订单
+    sendOrder.order_by("createTime").reverse()
+    receivedOrder.order_by("createTime").reverse()
 
-    }
-    url = "http://zhjw.scu.edu.cn/j_spring_security_check"
-    session = requests.session()
-    cookies = None
-    res = session.post(sculogin.url, data=data, cookies=cookies)
+    sendOrders = [order_user_Serializer(order_obj,orderFields,userFields) for order_obj in sendOrder]
+    receivedOrders = [order_user_Serializer(order_obj,orderFields,userFields) for order_obj in receivedOrder]
+    # sendOrder = sendOrder.values(*orderFields)
+    # receivedOrder = receivedOrder.values(*orderFields)
+
+    return JsonResponse({"sendOrder":sendOrders,"receivedOrder":receivedOrders},safe=False)
+
+# def get_cookies(request):
+#     return JsonResponse(dict(request.session['cookies']))

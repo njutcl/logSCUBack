@@ -26,8 +26,8 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = '+mp8+$w=^j2v^#l)51o+8pg^zu$d#30%amlk2p$f68hod9x5j#'
 
-APPID = 'wxc84b45f5439e7c25'
-SECRET = '8b23fb5594a94e3443ec77ffd2cdf185'
+APPID = 'wx632907b2fe528cf6'
+SECRET = '814200462d1bf4b0c4eae3fb93375fff'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
@@ -41,7 +41,10 @@ INSTALLED_APPS = [
     'feedback',
     'comment',
     'order',
+    'order2',
+    'order3',
     'account',
+    'credit',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -52,9 +55,9 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
+    'django.contrib.sessions.middleware.SessionMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
@@ -88,19 +91,15 @@ WSGI_APPLICATION = 'matesHelps.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'matesHelp',
+        'NAME': 'test',
+        'PASSWORD': '',
         'USER': 'root',
-        'PASSWORD':'tmzqq520..',
-        'HOST':'129.28.140.83',
-        'port':3306,
-        'OPTIONS':{
-            'charset':'utf8mb4',
+        'HOST': '127.0.0.1',
+        'port': 3306,
+        'OPTIONS': {
+            'charset': 'utf8mb4',
         }
     }
-    # 'default':{
-    #     'ENGINE': 'django.db.backends.sqlite3',
-    #     'NAME':'database'
-    # }
 }
 
 
@@ -140,14 +139,14 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/2.2/howto/static-files/
 
-STATIC_URL = '/static/matesHelps/'
-MEDIA_URL = '/media/matesHelps/'
+STATIC_URL = '/static/'
+MEDIA_URL = '/media/'
 if platform.system()=='Windows':
     STATIC_ROOT = os.curdir + '/static'
     MEDIA_ROOT = os.curdir + '/media'
 else:
-    STATIC_ROOT = "/var/matesHelps/static"
-    MEDIA_ROOT = "/var/matesHelps/media"
+    STATIC_ROOT = "/var/www/html/logscu/static"
+    MEDIA_ROOT = "/var/www/html/logscu/media"
 
 
 

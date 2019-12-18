@@ -14,18 +14,19 @@
   </component>
   <component name="NewModuleRootManager">
     <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/account" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/announce" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/comment" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/feedback" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/matesHelps" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/order" isTestSource="false" />
       <excludeFolder url="file://$MODULE_DIR$/venv" />
     </content>
-    <orderEntry type="inheritedJdk" />
+    <orderEntry type="jdk" jdkName="Python 3.7" jdkType="Python SDK" />
     <orderEntry type="sourceFolder" forTests="false" />
   </component>
   <component name="TemplatesService">
     <option name="TEMPLATE_CONFIGURATION" value="Django" />
-    <option name="TEMPLATE_FOLDERS">
-      <list>
-        <option value="$MODULE_DIR$/../matesHelps\templates" />
-      </list>
-    </option>
   </component>
   <component name="TestRunnerService">
     <option name="projectConfiguration" value="pytest" />
