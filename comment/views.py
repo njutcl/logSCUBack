@@ -1,6 +1,5 @@
 from django.shortcuts import render
 from account.models import *
-from order.models import *
 from .models import *
 from django.shortcuts import redirect, get_object_or_404
 from django.http import JsonResponse
@@ -46,6 +45,7 @@ def toComment(request):
     openid = request.session.get("openid", "")
 
     cur_user = get_object_or_404(user, openid=openid)
+
     if request.method == 'POST':
         orderid = request.POST.get("orderid", "")
         cur_order = get_object_or_404(order, orderid=orderid)
@@ -71,11 +71,12 @@ def toComment(request):
                     commentObj.owner_commented = True
                     commentObj.save()
                     calRate(cur_order.free_lancer)  # 计算小哥评分
+                    cur_order.order_status = order.completed
+                    cur_order.save()
                     return JsonResponse({"msg": "评价成功"})
             except ObjectDoesNotExist as e:
                 print(e)
                 commentObj = comment()
-
                 commentObj.owner_text = text
                 commentObj.owner_star = star
                 commentObj.owner_commented = True
@@ -93,8 +94,10 @@ def toComment(request):
                     commentObj.lancer_star = star
                     commentObj.lancer_text = text
                     commentObj.lancer_commented = True
+                    cur_order.order_status=order.completed
                     commentObj.save()
                     calRate(cur_order.order_owner)  # 计算主人评分
+                    cur_order.save()
                     return JsonResponse({"msg": "评价成功"})
             except ObjectDoesNotExist as e:
                 print(e)
@@ -114,10 +117,200 @@ def get_comment(request):
     orderid = request.GET.get("orderid")
     cur_order = get_object_or_404(order, orderid=orderid)
 
-    if cur_order.order_status != cur_order.completed:
+    if cur_order.order_status ==order.completing:
         return JsonResponse({"msg": "订单未完成"})
     else:
         commentObj = cur_order.comment
         return JsonResponse({"orderid": orderid, "comment": serializer.default(commentObj, type(comment()),
                                                                                *["owner_star", "lancer_star",
                                                                                  "owner_text", "lancer_text"])})
+
+def get_comments(request):
+    # openid = request.session.get("openid", "")
+    # cur_user = get_object_or_404(user, openid=openid)
+    # cur_order = get_object_or_404(order,orderid=1, order_owner=cur_user,order_status=3)
+
+    comments = comment.objects.values(*["id","owner_star", "lancer_star","owner_text", "lancer_text"])
+    results = sorted(comments, key=lambda commentObj: commentObj['id'], reverse=True)
+    return JsonResponse({'results': results}, safe=False)
+   # return JsonResponse({"comment": serializer.default(commentObj, type(comment()),
+    #                                                                       *["id","owner_star", "lancer_star",
+    #                                                                         "owner_text", "lancer_text"])})
+
+@csrf_exempt
+def toComment2(request):
+    # method post
+    openid = request.session.get("openid", "")
+
+    cur_user = get_object_or_404(user, openid=openid)
+
+    if request.method == 'POST':
+        orderid = request.POST.get("orderid", "")
+        cur_order = get_object_or_404(order2, orderid=orderid)
+
+        if cur_order.order_status == order.completing | order.uncompleted:
+            return JsonResponse({"msg": "订单未完成不能评价"}, status=404)
+
+        star = request.POST.get("star", "")
+        try:
+            star = int(star)
+        except ValueError:
+            return JsonResponse({"msg": "星级字段有问题"}, status=404)
+        text = request.POST.get("text", "")
+
+        if cur_order.order_owner == cur_user:
+            try:
+                if cur_order.comment.owner_commented:
+                    return JsonResponse({"msg": "你已评价"}, status=404)
+                else:
+                    commentObj = cur_order.comment
+                    commentObj.owner_star = star
+                    commentObj.owner_text = text
+                    commentObj.owner_commented = True
+                    commentObj.save()
+                    calRate(cur_order.free_lancer)  # 计算小哥评分
+                    cur_order.order_status = order2.completed
+                    cur_order.save()
+                    return JsonResponse({"msg": "评价成功"})
+            except ObjectDoesNotExist as e:
+                print(e)
+                commentObj = comment()
+                commentObj.owner_text = text
+                commentObj.owner_star = star
+                commentObj.owner_commented = True
+                commentObj.order2 = cur_order
+                commentObj.save()
+                calRate(cur_order.free_lancer)  # 计算小哥评分
+
+                return JsonResponse({"msg": "评价成功"})
+        elif cur_order.free_lancer == cur_user:
+            try:
+                if cur_order.comment.lancer_commented:
+                    return JsonResponse({"msg": "你已评价"}, status=404)
+                else:
+                    commentObj = cur_order.comment
+                    commentObj.lancer_star = star
+                    commentObj.lancer_text = text
+                    commentObj.lancer_commented = True
+                    cur_order.order_status=order.completed
+                    commentObj.save()
+                    calRate(cur_order.order_owner)  # 计算主人评分
+                    cur_order.order_status = order2.completed
+                    cur_order.save()
+                    return JsonResponse({"msg": "评价成功"})
+            except ObjectDoesNotExist as e:
+                print(e)
+                commentObj = comment()
+                commentObj.lancer_text = text
+                commentObj.lancer_star = star
+                commentObj.lancer_commented = True
+                commentObj.order2 = cur_order
+                commentObj.save()
+                calRate(cur_order.order_owner)  # 计算主人评分
+                return JsonResponse({"msg": "评价成功"})
+    else:
+        return JsonResponse({"msg": "请使用POST"}, status=404)
+
+
+def get_comment2(request):
+    orderid = request.GET.get("orderid")
+    cur_order = get_object_or_404(order2, orderid=orderid)
+
+    if cur_order.order_status != cur_order.uncommented|cur_order.completed:
+        return JsonResponse({"msg": "订单未完成"})
+    else:
+        commentObj = cur_order.comment
+        return JsonResponse({"orderid": orderid, "comment": serializer.default(commentObj, type(comment()),
+                                                                               *["owner_star", "lancer_star",
+                                                                                 "owner_text", "lancer_text"])})
+
+
+@csrf_exempt
+def toComment3(request):
+    # method post
+    openid = request.session.get("openid", "")
+
+    cur_user = get_object_or_404(user, openid=openid)
+
+    if request.method == 'POST':
+        orderid = request.POST.get("orderid", "")
+        cur_order = get_object_or_404(order3, orderid=orderid)
+
+        if cur_order.order_status == order.completing | order.uncompleted:
+            return JsonResponse({"msg": "订单未完成不能评价"}, status=404)
+
+        star = request.POST.get("star", "")
+        try:
+            star = int(star)
+        except ValueError:
+            return JsonResponse({"msg": "星级字段有问题"}, status=404)
+        text = request.POST.get("text", "")
+
+        if cur_order.order_owner == cur_user:
+            try:
+                if cur_order.comment.owner_commented:
+                    return JsonResponse({"msg": "你已评价"}, status=404)
+                else:
+                    commentObj = cur_order.comment
+                    commentObj.owner_star = star
+                    commentObj.owner_text = text
+                    commentObj.owner_commented = True
+                    commentObj.save()
+                    calRate(cur_order.free_lancer)  # 计算小哥评分
+                    cur_order.order_status = order3.completed
+                    cur_order.save()
+                    return JsonResponse({"msg": "评价成功"})
+            except ObjectDoesNotExist as e:
+                print(e)
+                commentObj = comment()
+                commentObj.owner_text = text
+                commentObj.owner_star = star
+                commentObj.owner_commented = True
+                commentObj.order3 = cur_order
+                commentObj.save()
+                calRate(cur_order.free_lancer)  # 计算小哥评分
+
+                return JsonResponse({"msg": "评价成功"})
+        elif cur_order.free_lancer == cur_user:
+            try:
+                if cur_order.comment.lancer_commented:
+                    return JsonResponse({"msg": "你已评价"}, status=404)
+                else:
+                    commentObj = cur_order.comment
+                    commentObj.lancer_star = star
+                    commentObj.lancer_text = text
+                    commentObj.lancer_commented = True
+
+                    commentObj.save()
+                    calRate(cur_order.order_owner)  # 计算主人评分
+                    cur_order.order_status = order3.completed
+                    cur_order.save()
+                    return JsonResponse({"msg": "评价成功"})
+
+            except ObjectDoesNotExist as e:
+                print(e)
+                commentObj = comment()
+                commentObj.lancer_text = text
+                commentObj.lancer_star = star
+                commentObj.lancer_commented = True
+                commentObj.order3 = cur_order
+                commentObj.save()
+                calRate(cur_order.order_owner)  # 计算主人评分
+
+                return JsonResponse({"msg": "评价成功"})
+    else:
+        return JsonResponse({"msg": "请使用POST"}, status=404)
+
+
+def get_comment3(request):
+    orderid = request.GET.get("orderid")
+    cur_order = get_object_or_404(order3, orderid=orderid)
+
+    if cur_order.order_status != cur_order.uncommented|cur_order.completed:
+        return JsonResponse({"msg": "订单未完成"})
+    else:
+        commentObj = cur_order.comment
+        return JsonResponse({"orderid": orderid, "comment": serializer.default(commentObj, type(comment()),
+                                                                               *["owner_star", "lancer_star",
+                                                                                 "owner_text", "lancer_text"])})
+

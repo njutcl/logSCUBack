@@ -14,11 +14,10 @@ class user(models.Model):
     # 接的订单
     # 发的订单
     rate = models.FloatField(verbose_name="评分", default=4.0)  # 信用评分
-    receiveAddress = models.CharField(verbose_name="收货地址", max_length=50, null=True, blank=True)
-
+    receiveAddress = models.CharField(verbose_name="收货地址", max_length=256, null=True, blank=True)
     received_order_count = models.IntegerField(verbose_name="收单数剩余", default=100)
     sended_order_count = models.IntegerField("发单数剩余", default=100)
-
+    name=models.CharField(verbose_name="姓名", max_length=50, null=True, blank=True)
     status_choices = (
         (banned, "banned"),
         (normal, "normal"),

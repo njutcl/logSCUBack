@@ -40,7 +40,7 @@ def search(request):
 
     results = order.objects.filter(order_status=order.uncompleted, free_lancer=None, campus=campus).values(
         *["orderid", "createTime", "money", "received_pos", "kuaidi", "campus", "expireDateTime",
-          "goods_introduction", "goods_category", "goods_img"])
+          "goods_introduction", "goods_category", "goods_img","goods_weight"])
     print(len(results))
     results = [_ for _ in results if search in _["received_pos"] or search in _["kuaidi"]]
 
@@ -87,7 +87,7 @@ def getOrder(request):  # 获得某个订单的具体信息
     if not ret_order:
         return JsonResponse({"msg": "orderid" + orderid + "用户不存在"})
     ret_keys = ["orderid","createTime", "expireDateTime", "order_owner", "money",
-                "kuaidi", "order_status", ]
+                "kuaidi", "order_status","goods_introduction", "goods_category","goods_weight" ]
     if user_exists and (ret_order.free_lancer == cur_user or ret_order.order_owner == cur_user):
         ret_keys.append(["hidden_info", "free_lancer", "recieved_pos"])
 
@@ -115,19 +115,19 @@ def sendOrder(request):
         expireTime = request.POST.get("expireTime", "")
         money = request.POST.get('money', "")
         kuaidi = request.POST.get("kuaidi", "")
-        # goods_introduction=request.POST.get("goods_introduction", "")
+        goods_introduction=request.POST.get("goods_introduction", "")
         # goods_img=request.POST.get("goods_img", "")
-        # goods_category=request.POST.get("goods_category", "")
+        goods_category=request.POST.get("goods_category", "")
         pos = request.POST.get('pos', "")
         received_pos = request.POST.get('received_pos', "")
         campus=request.POST.get("xiaoqu", "")
         goods_weight = request.POST.get('goods_weight', "")
-        hidden_info = request.POST.get("hidden_info", "")
+        #hidden_info = request.POST.get("hidden_info", "")
 
-        print(cur_user, hidden_info,expireTime,kuaidi, campus,received_pos,goods_weight, pos,money)
+        print(cur_user, goods_introduction,expireTime,kuaidi, campus,received_pos,goods_weight, pos,money)
         try:
             expireTime = int(expireTime)
-            money = float(expireTime)
+            # money = float(expireTime)
         except ValueError as e:
             print(e)
             print("expireTime", expireTime)
@@ -137,8 +137,8 @@ def sendOrder(request):
         #     return JsonResponse({"msg": "订单id重复"}, status=404)
         # except:
         #     pass
-        if not cur_user or not hidden_info or not goods_weight or not money or not kuaidi or not expireTime \
-                or not received_pos or not campus or not pos:
+        if not cur_user or not goods_introduction or not goods_weight or not money or not kuaidi or not expireTime \
+                or not received_pos or not campus or not pos or not goods_category:
             return JsonResponse({"msg": "字段不全"}, status=404)
         else:
             if cur_user.sended_order_count <= 0:
@@ -153,10 +153,11 @@ def sendOrder(request):
             newOrder.money = money
             newOrder.kuaidi = kuaidi
             newOrder.pos = pos
-            newOrder.recieved_pos = received_pos
+            newOrder.goods_category = goods_category
+            newOrder.received_pos = received_pos
             newOrder.campus=campus
             newOrder.goods_weight = goods_weight
-            newOrder.hidden_info = hidden_info
+            newOrder.goods_introduction = goods_introduction
             newOrder.save()
             cur_user.save()
 
@@ -193,6 +194,7 @@ def receiveOrder(request):
     elif cur_order.free_lancer:
         return JsonResponse({"msg": "该订单已经有人领单"}, status=404)
     else:
+        cur_order.order_status = order.completing
         cur_order.free_lancer = cur_user
         cur_user.received_order_count -= 1
         cur_order.save()
@@ -265,9 +267,9 @@ def orderComplete(request):
     if cur_order.order_owner == cur_user:
         if cur_order.order_status == order.completed:
             return JsonResponse({"msg": "订单早已完成"}, status=404)
-        elif cur_order.order_status != order.uncompleted:
+        elif cur_order.order_status != order.completing:
             return JsonResponse({"msg": "订单已取消或过期不能完成"}, status=404)
-        cur_order.order_status = order.completed
+        cur_order.order_status = order.uncommented
         cur_order.save()
         cur_user.sended_order_count += 1
         lancer_user = cur_order.free_lancer
@@ -280,3 +282,4 @@ def orderComplete(request):
         return JsonResponse({"msg": "请联系订单主人后由主人确认"}, status=404)
 
     return JsonResponse({"msg": "你无权确认完成订单"}, status=404)
+
